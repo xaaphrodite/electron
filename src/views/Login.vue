@@ -39,12 +39,9 @@
 </template>
 
 <script>
-import axios from "axios";
-import bcrypt from "bcryptjs";
-import Cookies from "js-cookie";
 import CryptoJS from "crypto-js";
 import progress from "nprogress";
-import store from "../store";
+import firebase from "firebase";
 import headerTitle from "../components/header-title.vue";
 export default {
   components: { headerTitle },
@@ -55,10 +52,10 @@ export default {
         username: "",
         password: "",
       },
-      api: {
-        url: "/api/user/",
-      },
     };
+  },
+  mounted() {
+    console.clear();
   },
   methods: {
     async login() {
@@ -66,53 +63,41 @@ export default {
         this.message = "Both fields are required";
         return;
       }
+      this.message = "";
+      let send = document.querySelectorAll(".submit");
+      send.forEach((el) => {
+        el.classList.add("none");
+      });
+      let load = document.querySelectorAll(".request");
+      load.forEach((el) => {
+        el.classList.remove("none");
+      });
       progress.start();
-      const csrfToken = Cookies.get("saveMe");
-      axios.defaults.headers.common["X-CSRF-TOKEN"] = csrfToken;
-      let result = await axios
-        .post(this.api.url + this.form.username)
+      firebase
+        .auth()
+        .signInWithEmailAndPassword(this.form.username, this.form.password)
         .then((response) => {
-          let data = CryptoJS.AES.decrypt(response.data.result, "isSecure").toString(CryptoJS.enc.Utf8);
-          let parseData = JSON.parse(data);
-          let whoAreYou = parseData.position;
-          let password = parseData.password;
-          let isValid = bcrypt.compareSync(this.form.password, password);
-          if (whoAreYou) {
-            if (isValid) {
-              let identifier = CryptoJS.AES.encrypt(whoAreYou, "isValid").toString();
-              localStorage.setItem("identifier", identifier);
-              if (whoAreYou === "divisi") {
-                store.commit("iamIs", whoAreYou);
-                this.$router.push("/dashboard/divisi");
-                progress.done();
-              } else if (whoAreYou === "rendan") {
-                store.commit("iamIs", whoAreYou);
-                this.$router.push("/dashboard/rendan");
-                progress.done();
-              } else if (whoAreYou === "lakdan") {
-                store.commit("iamIs", whoAreYou);
-                this.$router.push("/dashboard/lakdan");
-                progress.done();
-              }
-            } else {
-              this.message = "Wrong username or password";
-              this.form.password = null;
-              progress.done();
-            }
-            this.message = "Wrong username or password";
-            this.form.password = null;
-            progress.done();
-          }
+          let auth = CryptoJS.AES.encrypt(this.form.username, "756433").toString();
+          localStorage.setItem("auth", auth);
+          localStorage.setItem("identifier", this.form.username);
+          this.$router.push("/MixPersonal");
+          return response;
         })
         .catch((error) => {
-          if (error) {
-            this.message = "Wrong username or password";
-            this.form.password = null;
-            progress.done();
-          }
+          let send = document.querySelectorAll(".submit");
+          send.forEach((el) => {
+            el.classList.remove("none");
+          });
+          let load = document.querySelectorAll(".request");
+          load.forEach((el) => {
+            el.classList.add("none");
+          });
+          console.clear();
+          this.form.password = "";
+          this.message = "Wrong email or password";
+          return error;
         });
       progress.done();
-      return result;
     },
   },
 };
@@ -153,8 +138,11 @@ a {
 }
 #message {
   color: red;
+  margin-top: -25px;
+  margin-bottom: 0px;
   margin-left: 5px;
-  margin-bottom: 8px;
+  position: fixed;
+  font-size: 0.7em;
 }
 section {
   display: flex;
