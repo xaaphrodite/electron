@@ -1,5 +1,5 @@
 <template>
-  <h2 style="display:none">ElectronJs</h2>
+  <div style="display: none">HelloWorld</div>
 </template>
 
 <script>
@@ -17,3 +17,7 @@ export default {
   },
 };
 </script>
+
+<style>
+/*  */
+</style>

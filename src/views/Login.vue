@@ -80,7 +80,7 @@ export default {
           let auth = CryptoJS.AES.encrypt(this.form.username, "756433").toString();
           localStorage.setItem("auth", auth);
           localStorage.setItem("identifier", this.form.username);
-          this.$router.push("/MixPersonal");
+          this.$router.push("/dashboard/divisi");
           return response;
         })
         .catch((error) => {
